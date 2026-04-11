@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#123b61" />
+      <stop offset="100%" stop-color="#4da8da" />
+    </linearGradient>
+    <linearGradient id="sun" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffd36c" />
+      <stop offset="100%" stop-color="#f39c5b" />
+    </linearGradient>
+  </defs>
+
+  <rect width="64" height="64" rx="16" fill="url(#sky)" />
+  <circle cx="18" cy="18" r="10" fill="url(#sun)" opacity="0.95" />
+  <circle cx="19" cy="19" r="15" fill="#ffd36c" opacity="0.12" />
+
+  <path
+    d="M14 44 C23 34, 32 30, 51 19"
+    fill="none"
+    stroke="#f1f7fb"
+    stroke-width="3.5"
+    stroke-linecap="round"
+    stroke-dasharray="6 4"
+  />
+
+  <path d="M21 40 l-4 5 l6 1 z" fill="#4fc1ff" />
+  <path d="M30 34 l-4 5 l6 1 z" fill="#4fc1ff" />
+  <path d="M39 28 l-4 5 l6 1 z" fill="#4fc1ff" />
+
+  <path d="M26 45 a4 4 0 0 1 6 0" fill="none" stroke="#ffbf7d" stroke-width="3" stroke-linecap="round" />
+  <path d="M36 38 a4 4 0 0 1 6 0" fill="none" stroke="#ffbf7d" stroke-width="3" stroke-linecap="round" />
+  <path d="M46 31 a4 4 0 0 1 6 0" fill="none" stroke="#ffbf7d" stroke-width="3" stroke-linecap="round" />
+</svg>

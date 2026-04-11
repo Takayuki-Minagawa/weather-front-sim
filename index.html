@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Front &amp; Air Mass Weather Simulator</title>
     <meta
+      id="pageDescription"
       name="description"
       content="前線・気団・気圧配置の変化を、天気図アニメーションと学習パネルで視覚的に学べる高校地学向けシミュレーター。"
     >
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -28,66 +30,65 @@
     <div class="page-shell">
       <header class="hero panel">
         <div class="hero-copy">
-          <p class="eyebrow">GitHub Pages Ready / Vanilla JavaScript</p>
-          <h1>前線・気団・天気変化シミュレーター</h1>
-          <p class="hero-lead">
+          <div class="hero-topbar">
+            <div class="brand-chip">
+              <span class="brand-mark" aria-hidden="true"></span>
+              <span id="brandLabel">Atmosphere Lab</span>
+            </div>
+
+            <div class="toolbar-groups">
+              <div class="toolbar-group">
+                <span id="themeSwitcherLabel" class="toolbar-label">表示テーマ</span>
+                <div id="themeToggle" class="toggle-group" role="group" aria-label="Theme"></div>
+              </div>
+
+              <div class="toolbar-group">
+                <span id="languageSwitcherLabel" class="toolbar-label">表示言語</span>
+                <div id="languageToggle" class="toggle-group" role="group" aria-label="Language"></div>
+              </div>
+            </div>
+          </div>
+
+          <p id="heroEyebrow" class="eyebrow">GitHub Pages Ready / Vanilla JavaScript</p>
+          <h1 id="heroTitle">前線・気団・天気変化シミュレーター</h1>
+          <p id="heroLead" class="hero-lead">
             <strong>寒冷前線</strong>、<strong>温暖前線</strong>、
             <strong>停滞前線</strong>、<strong>閉塞前線</strong> の動きに合わせて、
             観測地点の天気・気温・気圧・風の変化を追える学習用 Web アプリです。
           </p>
         </div>
 
-        <div class="hero-stats">
-          <article class="hero-card">
-            <span class="hero-card-label">観察できること</span>
-            <strong>前線通過前後の変化</strong>
-            <p>気温・風向・雲・降水がどう連動するかを時間軸で追跡します。</p>
-          </article>
-          <article class="hero-card">
-            <span class="hero-card-label">学習モジュール</span>
-            <strong>気象チューターAI</strong>
-            <p>現在の状態を、教科書レベルの因果関係に沿って丁寧に解説します。</p>
-          </article>
-          <article class="hero-card">
-            <span class="hero-card-label">公開方法</span>
-            <strong>静的ファイルのみ</strong>
-            <p>ビルド不要で、GitHub Pages にそのまま配置して公開できます。</p>
-          </article>
-        </div>
+        <div id="heroStats" class="hero-stats"></div>
       </header>
 
       <main class="dashboard">
         <section class="panel control-panel">
           <div class="panel-heading">
             <div>
-              <p class="kicker">Simulation Controls</p>
-              <h2>前線と観測条件</h2>
+              <p id="controlsKicker" class="kicker">Simulation Controls</p>
+              <h2 id="controlsTitle">前線と観測条件</h2>
             </div>
-            <p class="panel-note">前線の種類、観測地点、時間を変えながら典型的な天気変化を比較します。</p>
+            <p id="controlsNote" class="panel-note">前線の種類、観測地点、時間を変えながら典型的な天気変化を比較します。</p>
           </div>
 
           <div id="frontSelector" class="front-selector" aria-label="前線の種類"></div>
 
           <div class="control-grid">
             <label class="control-field" for="locationSelect">
-              <span>観測地点</span>
+              <span id="locationFieldLabel">観測地点</span>
               <select id="locationSelect"></select>
             </label>
 
             <label class="control-field" for="speedSelect">
-              <span>再生速度</span>
-              <select id="speedSelect">
-                <option value="1250">ゆっくり</option>
-                <option value="850" selected>標準</option>
-                <option value="500">速い</option>
-              </select>
+              <span id="speedFieldLabel">再生速度</span>
+              <select id="speedSelect"></select>
             </label>
           </div>
 
           <div class="timeline-card">
             <div class="timeline-head">
               <div>
-                <span class="timeline-label">時間スライダー</span>
+                <span id="timelineCaption" class="timeline-label">時間スライダー</span>
                 <strong id="timelineLabel">基準時刻</strong>
               </div>
               <button id="playButton" class="action-button" type="button">自動再生</button>
@@ -115,8 +116,8 @@
 
           <div>
             <div class="subheading">
-              <h3>教科書シナリオ</h3>
-              <p>典型場面をすぐ呼び出せます。</p>
+              <h3 id="scenarioTitle">教科書シナリオ</h3>
+              <p id="scenarioNote">典型場面をすぐ呼び出せます。</p>
             </div>
             <div id="scenarioStrip" class="scenario-strip"></div>
           </div>
@@ -125,10 +126,10 @@
         <section class="panel map-panel">
           <div class="panel-heading">
             <div>
-              <p class="kicker">Weather Map Panel</p>
-              <h2>天気図アニメーション</h2>
+              <p id="mapKicker" class="kicker">Weather Map Panel</p>
+              <h2 id="mapTitle">天気図アニメーション</h2>
             </div>
-            <p class="panel-note">前線、気圧系、雲域、風向の変化を模式図で表示します。</p>
+            <p id="mapNote" class="panel-note">前線、気圧系、雲域、風向の変化を模式図で表示します。</p>
           </div>
 
           <div class="map-stage">
@@ -136,19 +137,19 @@
 
             <div class="map-overlay">
               <article class="map-chip">
-                <span>現在の天気</span>
+                <span id="weatherChipLabel">現在の天気</span>
                 <strong id="weatherBadge">-</strong>
               </article>
               <article class="map-chip">
-                <span>気温</span>
+                <span id="temperatureChipLabel">気温</span>
                 <strong id="temperatureBadge">-</strong>
               </article>
               <article class="map-chip">
-                <span>気圧</span>
+                <span id="pressureChipLabel">気圧</span>
                 <strong id="pressureBadge">-</strong>
               </article>
               <article class="map-chip">
-                <span>風</span>
+                <span id="windChipLabel">風</span>
                 <strong id="windBadge">-</strong>
               </article>
             </div>
@@ -158,10 +159,10 @@
         <section class="panel graph-panel">
           <div class="panel-heading">
             <div>
-              <p class="kicker">Observation Graph</p>
-              <h2>観測値の時間変化</h2>
+              <p id="graphKicker" class="kicker">Observation Graph</p>
+              <h2 id="graphTitle">観測値の時間変化</h2>
             </div>
-            <p class="panel-note">選択中の地点で、前線通過前後の典型的な変化を折れ線で追います。</p>
+            <p id="graphNote" class="panel-note">選択中の地点で、前線通過前後の典型的な変化を折れ線で追います。</p>
           </div>
 
           <div id="metricCards" class="metric-grid"></div>
@@ -170,10 +171,10 @@
         <section class="panel legend-panel">
           <div class="panel-heading">
             <div>
-              <p class="kicker">Air Mass Legend</p>
-              <h2>気団と気圧配置</h2>
+              <p id="legendKicker" class="kicker">Air Mass Legend</p>
+              <h2 id="legendTitle">気団と気圧配置</h2>
             </div>
-            <p class="panel-note">前線の前後で、どの気団が優勢になるかを整理します。</p>
+            <p id="legendNote" class="panel-note">前線の前後で、どの気団が優勢になるかを整理します。</p>
           </div>
 
           <div id="airMassLegend" class="legend-grid"></div>
@@ -182,8 +183,8 @@
         <section class="panel learning-panel">
           <div class="panel-heading">
             <div>
-              <p class="kicker">Learning Module</p>
-              <h2>気象チューターAI</h2>
+              <p id="learningKicker" class="kicker">Learning Module</p>
+              <h2 id="learningTitle">気象チューターAI</h2>
             </div>
             <div class="panel-actions">
               <button id="explainButton" class="secondary-button" type="button">通常解説</button>
@@ -197,17 +198,17 @@
         <section class="panel notes-panel">
           <div class="panel-heading">
             <div>
-              <p class="kicker">Study Guide</p>
-              <h2>このアプリで見るべき点</h2>
+              <p id="notesKicker" class="kicker">Study Guide</p>
+              <h2 id="notesTitle">このアプリで見るべき点</h2>
             </div>
-            <p class="panel-note">暗記ではなく、空気の性質の違いから説明できるようになることを目標にします。</p>
+            <p id="notesNote" class="panel-note">暗記ではなく、空気の性質の違いから説明できるようになることを目標にします。</p>
           </div>
           <div id="studyNotes" class="notes-grid"></div>
         </section>
       </main>
 
       <footer class="footer">
-        <p>
+        <p id="footerText">
           静的 HTML / CSS / JavaScript で構成しているため、`index.html` をルートに置いたまま GitHub Pages に公開できます。
         </p>
       </footer>
