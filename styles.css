@@ -304,8 +304,7 @@ input {
 
 .hero-card p,
 .panel-note,
-.subheading p,
-.footer p {
+.subheading p {
   color: var(--muted);
   line-height: 1.7;
   margin: 0;
@@ -741,11 +740,6 @@ input {
 
 .note-card p {
   margin: 10px 0 0;
-}
-
-.footer {
-  margin-top: 18px;
-  padding: 8px 4px 0;
 }
 
 .weather-grid line,

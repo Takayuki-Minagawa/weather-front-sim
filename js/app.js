@@ -73,7 +73,6 @@ const elements = {
   notesKicker: document.querySelector("#notesKicker"),
   notesTitle: document.querySelector("#notesTitle"),
   notesNote: document.querySelector("#notesNote"),
-  footerText: document.querySelector("#footerText"),
   frontSelector: document.querySelector("#frontSelector"),
   locationSelect: document.querySelector("#locationSelect"),
   speedSelect: document.querySelector("#speedSelect"),
@@ -189,7 +188,6 @@ function renderStaticText() {
   elements.notesKicker.textContent = getText("notesKicker", state.language);
   elements.notesTitle.textContent = getText("notesTitle", state.language);
   elements.notesNote.textContent = getText("notesNote", state.language);
-  elements.footerText.textContent = getText("footerText", state.language);
 }
 
 function renderFrontSelector() {
