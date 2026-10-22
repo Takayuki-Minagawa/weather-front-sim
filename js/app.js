@@ -169,7 +169,7 @@ let toastTimer = null;
 let skySceneKey = null;
 
 // Data attributes that identify a focusable control across renderPlay() re-renders.
-const FOCUS_KEYS = ["challengePick", "challengeAction", "lore", "loreCard", "triviaNext"];
+const FOCUS_KEYS = ["challengePick", "challengeAction", "lore", "loreCard", "triviaNext", "heroLink"];
 
 function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -215,7 +215,7 @@ function renderHeroStats() {
       <span class="hero-card-label">${getText("heroRankLabel", state.language)}</span>
       <strong>${rank.label}</strong>
       <p>${rankBody}</p>
-      <a class="hero-link" href="#challenge">${getText("heroRankCta", state.language)} →</a>
+      <a class="hero-link" href="#challenge" data-hero-link="challenge">${getText("heroRankCta", state.language)} →</a>
     </article>
     <article class="hero-card hero-trivia">
       <span class="hero-card-label">💡 ${getText("heroTriviaLabel", state.language)} ${state.triviaIndex + 1}/${TRIVIA.length}</span>

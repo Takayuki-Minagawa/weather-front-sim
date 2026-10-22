@@ -228,7 +228,7 @@ export function normalizeProgress(raw) {
   if (raw.hours && typeof raw.hours === "object") {
     frontKeys.forEach((frontKey) => {
       const mask = raw.hours[frontKey];
-      if (Number.isInteger(mask) && mask > 0) hours[frontKey] = mask & FULL_DAY_MASK;
+      if (Number.isInteger(mask) && mask > 0 && mask <= FULL_DAY_MASK) hours[frontKey] = mask;
     });
   }
 
