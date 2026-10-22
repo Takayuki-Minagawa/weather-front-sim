@@ -49,7 +49,7 @@
             </div>
           </div>
 
-          <p id="heroEyebrow" class="eyebrow">GitHub Pages Ready / Vanilla JavaScript</p>
+          <p id="heroEyebrow" class="eyebrow">見る・予想する・確かめる / 前線ラボ</p>
           <h1 id="heroTitle">前線・気団・天気変化シミュレーター</h1>
           <p id="heroLead" class="hero-lead">
             <strong>寒冷前線</strong>、<strong>温暖前線</strong>、
@@ -112,6 +112,7 @@
               <span>+6h</span>
               <span>+12h</span>
             </div>
+            <p id="shortcutHint" class="shortcut-hint">キーボード: ← → で1時間ずつ移動、スペースで再生/停止</p>
           </div>
 
           <div>
@@ -156,6 +157,18 @@
           </div>
         </section>
 
+        <section class="panel sky-panel">
+          <div class="panel-heading">
+            <div>
+              <p id="skyKicker" class="kicker">Sky Window</p>
+              <h2 id="skyTitle">空の窓</h2>
+            </div>
+            <p id="skyNote" class="panel-note">観測地点から空を見上げると、こんな景色。雲の種類と天気が時間とともに変わります。</p>
+          </div>
+
+          <div id="skyWindow" class="sky-window"></div>
+        </section>
+
         <section class="panel graph-panel">
           <div class="panel-heading">
             <div>
@@ -195,7 +208,46 @@
           <div id="learningContent" class="learning-content"></div>
         </section>
 
-        <section class="panel notes-panel">
+        <section id="challenge" class="panel challenge-panel panel-wide">
+          <div class="panel-heading">
+            <div>
+              <p id="challengeKicker" class="kicker">Forecaster Challenge</p>
+              <h2 id="challengeTitle">予報士チャレンジ</h2>
+            </div>
+            <p id="challengeNote" class="panel-note">いまの観測から未来を予想したり、観測データだけで前線を見破ったり。正解を重ねて称号を上げよう。</p>
+          </div>
+
+          <div id="challengeContent" class="challenge-content" aria-live="polite"></div>
+        </section>
+
+        <section class="panel lore-panel">
+          <div class="panel-heading">
+            <div>
+              <p id="loreKicker" class="kicker">Weather Lore</p>
+              <h2 id="loreTitle">観天望気 ホント？ウソ？</h2>
+            </div>
+            <button id="loreReset" class="secondary-button" type="button">カードを裏返す</button>
+          </div>
+          <p id="loreNote" class="panel-note lore-note">昔から伝わる天気のことわざ。当たりそうか、迷信っぽいか、予想してからめくってみよう。</p>
+
+          <div id="loreGrid" class="lore-grid"></div>
+        </section>
+
+        <section class="panel badges-panel">
+          <div class="panel-heading">
+            <div>
+              <p id="badgesKicker" class="kicker">Stamp Card</p>
+              <h2 id="badgesTitle">バッジコレクション</h2>
+            </div>
+            <strong id="badgeCount" class="badge-count">0 / 8</strong>
+          </div>
+          <p id="badgesNote" class="panel-note">アプリのあちこちを探検するとバッジが集まります。記録はこのブラウザだけに保存されます。</p>
+
+          <ul id="badgeGrid" class="badge-grid"></ul>
+          <button id="badgesReset" class="secondary-button badges-reset" type="button">記録をリセット</button>
+        </section>
+
+        <section class="panel notes-panel panel-wide">
           <div class="panel-heading">
             <div>
               <p id="notesKicker" class="kicker">Study Guide</p>
@@ -208,6 +260,8 @@
       </main>
 
     </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
     <script type="module" src="js/app.js"></script>
   </body>

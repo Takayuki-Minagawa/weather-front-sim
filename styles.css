@@ -320,7 +320,11 @@ input {
 .control-panel,
 .graph-panel,
 .legend-panel,
-.notes-panel {
+.notes-panel,
+.sky-panel,
+.challenge-panel,
+.lore-panel,
+.badges-panel {
   padding: 24px;
 }
 
@@ -335,6 +339,11 @@ input {
   gap: 16px;
   justify-content: space-between;
   margin-bottom: 18px;
+}
+
+.panel-heading > div:first-child {
+  flex: 0 1 auto;
+  min-width: min(15rem, 50%);
 }
 
 .panel-heading h2 {
@@ -1029,6 +1038,719 @@ html[data-theme="light"] .graph-focus {
   stroke: rgba(30, 63, 89, 0.22);
 }
 
+.panel-wide {
+  grid-column: 1 / -1;
+}
+
+.visually-hidden {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.shortcut-hint {
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin: 12px 0 0;
+}
+
+.action-button[disabled],
+.secondary-button[disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+}
+
+.hero-link {
+  color: #8dd7ff;
+  display: inline-block;
+  font-weight: 700;
+  margin-top: 10px;
+  text-decoration: none;
+}
+
+.hero-link:hover,
+.hero-link:focus-visible {
+  text-decoration: underline;
+}
+
+.hero-trivia p {
+  margin-top: 8px;
+}
+
+.trivia-next {
+  font-size: 0.88rem;
+  margin-top: 12px;
+  padding: 8px 14px;
+}
+
+/* Sky window */
+
+.sky-window {
+  display: grid;
+  gap: 14px;
+}
+
+.sky-frame {
+  border: 1px solid rgba(156, 203, 232, 0.2);
+  border-radius: var(--radius-xl);
+  box-shadow: inset 0 0 0 6px rgba(4, 17, 29, 0.35);
+  overflow: hidden;
+  position: relative;
+}
+
+.sky-frame svg {
+  display: block;
+  height: auto;
+  width: 100%;
+}
+
+.sky-top.clear { stop-color: #3d9be0; }
+.sky-bottom.clear { stop-color: #bfe6ff; }
+.sky-top.partly-cloudy { stop-color: #4f9fd6; }
+.sky-bottom.partly-cloudy { stop-color: #cfe8f8; }
+.sky-top.cloudy { stop-color: #7d93a6; }
+.sky-bottom.cloudy { stop-color: #c3ced8; }
+.sky-top.rain { stop-color: #56677a; }
+.sky-bottom.rain { stop-color: #94a3b0; }
+.sky-top.heavy-rain { stop-color: #3a4756; }
+.sky-bottom.heavy-rain { stop-color: #6c7a87; }
+.sky-top.showers { stop-color: #6a87a1; }
+.sky-bottom.showers { stop-color: #b5c6d3; }
+.sky-top.thunderstorm { stop-color: #262a40; }
+.sky-bottom.thunderstorm { stop-color: #545a77; }
+
+.sky-sun {
+  fill: #ffe08a;
+}
+
+.sky-sun-glow {
+  animation: pulseGlow 5s ease-in-out infinite;
+  fill: rgba(255, 224, 138, 0.35);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.sky-halo {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.75);
+  stroke-dasharray: 2 1.5;
+  stroke-width: 1.6;
+}
+
+.sky-wisp {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.6);
+  stroke-linecap: round;
+  stroke-width: 2.2;
+}
+
+.sky-cloud {
+  fill: rgba(255, 255, 255, 0.92);
+}
+
+.sky-cloud.grey {
+  fill: rgba(196, 206, 216, 0.95);
+}
+
+.sky-cloud.dark {
+  fill: rgba(92, 104, 118, 0.95);
+}
+
+.sky-cloud.low {
+  fill: rgba(220, 228, 235, 0.7);
+}
+
+.sky-cloud.tower {
+  fill: rgba(232, 236, 245, 0.96);
+  filter: drop-shadow(0 4px 6px rgba(20, 24, 40, 0.5));
+}
+
+.sky-cloud.drift {
+  animation: cloudDrift 14s ease-in-out infinite alternate;
+}
+
+.sky-cloud.drift.slow {
+  animation-duration: 20s;
+}
+
+.sky-lightning {
+  animation: flicker 1.6s steps(1, end) infinite;
+  fill: #ffe38f;
+}
+
+.sky-flash {
+  animation: skyFlash 3.2s steps(1, end) infinite;
+  fill: #ffffff;
+  opacity: 0;
+}
+
+.sky-rain {
+  animation: skyRain 0.75s linear infinite;
+  stroke: rgba(225, 242, 255, 0.85);
+  stroke-linecap: round;
+  stroke-width: 1.2;
+}
+
+.sky-ground {
+  fill: #2f5e4a;
+}
+
+.sky-town {
+  fill: #20413a;
+}
+
+.sky-pole {
+  stroke: #e9eef2;
+  stroke-width: 1.4;
+}
+
+.sky-sock {
+  fill: #ff8a5c;
+  stroke: #ffffff;
+  stroke-width: 0.6;
+}
+
+.sky-person {
+  color: #f6f1e4;
+  fill: #f6f1e4;
+}
+
+.sky-umbrella {
+  fill: #ff6f91;
+}
+
+.sky-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  left: 12px;
+  position: absolute;
+  top: 12px;
+}
+
+.sky-badge {
+  background: rgba(4, 17, 29, 0.66);
+  border-radius: 999px;
+  color: #f2f9fd;
+  font-size: 0.84rem;
+  padding: 6px 10px;
+}
+
+.sky-caption {
+  background: rgba(7, 24, 37, 0.62);
+  border: 1px solid rgba(156, 203, 232, 0.14);
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
+}
+
+.sky-caption p {
+  color: var(--muted);
+  line-height: 1.7;
+  margin: 0;
+}
+
+.sky-caption .kicker {
+  margin-bottom: 4px;
+}
+
+/* Forecaster challenge */
+
+.challenge-content {
+  display: grid;
+  gap: 16px;
+}
+
+.challenge-scoreboard {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.challenge-scoreboard div {
+  background: rgba(7, 24, 37, 0.62);
+  border: 1px solid rgba(156, 203, 232, 0.14);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+}
+
+.challenge-scoreboard span {
+  color: var(--muted);
+  display: block;
+  font-size: 0.82rem;
+  margin-bottom: 4px;
+}
+
+.challenge-scoreboard strong {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+
+.challenge-mode {
+  font-family: var(--font-display);
+  font-weight: 700;
+  margin: 0;
+}
+
+.challenge-body {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+}
+
+.challenge-now,
+.challenge-questions,
+.challenge-reveal {
+  background: rgba(7, 24, 37, 0.62);
+  border: 1px solid rgba(156, 203, 232, 0.14);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+}
+
+.challenge-now > strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  margin: 6px 0 4px;
+}
+
+.challenge-now-time {
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+
+.challenge-prompt {
+  font-weight: 700;
+  margin: 0 0 14px;
+}
+
+.challenge-row {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  margin-top: 10px;
+}
+
+.challenge-row > span {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.challenge-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.challenge-option {
+  background: rgba(7, 27, 40, 0.88);
+  border: 1px solid rgba(125, 208, 255, 0.18);
+  border-radius: 999px;
+  color: var(--text);
+  cursor: pointer;
+  padding: 9px 14px;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.challenge-option:hover:not([disabled]),
+.challenge-option:focus-visible {
+  transform: translateY(-2px);
+}
+
+.challenge-option[disabled] {
+  cursor: default;
+}
+
+.challenge-option.is-picked {
+  background: rgba(80, 185, 255, 0.24);
+  border-color: rgba(125, 208, 255, 0.7);
+}
+
+.challenge-option.is-correct {
+  background: rgba(139, 214, 165, 0.22);
+  border-color: rgba(139, 214, 165, 0.85);
+}
+
+.challenge-option.is-wrong {
+  background: rgba(243, 156, 91, 0.2);
+  border-color: rgba(243, 156, 91, 0.85);
+  text-decoration: line-through;
+}
+
+.detective-options .challenge-option {
+  border-radius: 14px;
+  flex: 1 1 40%;
+  padding: 14px;
+}
+
+.challenge-reveal {
+  animation: popIn 360ms ease;
+}
+
+.challenge-reveal.is-perfect {
+  border-color: rgba(255, 208, 114, 0.6);
+  box-shadow: 0 0 0 1px rgba(255, 208, 114, 0.25), 0 12px 36px rgba(255, 208, 114, 0.12);
+}
+
+.challenge-reveal strong {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+}
+
+.challenge-reveal p {
+  color: var(--muted);
+  line-height: 1.7;
+  margin: 8px 0 0;
+}
+
+.challenge-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: end;
+}
+
+.detective-strip {
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+  text-align: center;
+}
+
+.detective-strip li {
+  display: grid;
+  gap: 2px;
+}
+
+.detective-icon {
+  font-size: 1.35rem;
+}
+
+.detective-strip small {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.detective-charts {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.detective-charts figure {
+  margin: 0;
+}
+
+.detective-charts figcaption {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.detective-charts svg {
+  height: 90px;
+  width: 100%;
+}
+
+/* Weather lore */
+
+.lore-note {
+  margin: -6px 0 16px;
+}
+
+.lore-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.lore-card {
+  background: rgba(7, 24, 37, 0.62);
+  border: 1px solid rgba(156, 203, 232, 0.14);
+  border-radius: var(--radius-lg);
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+}
+
+.lore-card.is-flipped {
+  animation: flipIn 420ms ease;
+}
+
+.lore-card.verdict-science {
+  border-color: rgba(139, 214, 165, 0.45);
+}
+
+.lore-card.verdict-partly {
+  border-color: rgba(255, 208, 114, 0.45);
+}
+
+.lore-card.verdict-mystery {
+  border-color: rgba(194, 157, 255, 0.45);
+}
+
+.lore-card p {
+  color: var(--muted);
+  line-height: 1.7;
+  margin: 0;
+}
+
+.lore-card .lore-saying {
+  color: var(--text);
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.lore-outcome {
+  font-weight: 700;
+}
+
+.lore-verdict {
+  font-size: 0.86rem;
+}
+
+.lore-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lore-actions .secondary-button {
+  flex: 1;
+  padding: 10px 12px;
+}
+
+/* Badges */
+
+.badge-count {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+}
+
+.badge-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+}
+
+.badge-card {
+  background: rgba(7, 24, 37, 0.62);
+  border: 1px dashed rgba(156, 203, 232, 0.24);
+  border-radius: var(--radius-md);
+  display: grid;
+  gap: 2px 12px;
+  grid-template-columns: auto minmax(0, 1fr);
+  opacity: 0.62;
+  padding: 12px 14px;
+}
+
+.badge-card.is-earned {
+  border-style: solid;
+  border-color: rgba(255, 208, 114, 0.5);
+  opacity: 1;
+}
+
+.badge-icon {
+  align-self: center;
+  font-size: 1.6rem;
+  grid-row: span 2;
+  text-align: center;
+  width: 2rem;
+}
+
+.badge-card strong {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+}
+
+.badge-card small {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.badges-reset {
+  font-size: 0.86rem;
+  margin-top: 14px;
+  padding: 8px 14px;
+}
+
+/* Toast and confetti */
+
+.toast {
+  background: rgba(9, 30, 47, 0.96);
+  border: 1px solid rgba(255, 208, 114, 0.55);
+  border-radius: 999px;
+  bottom: 24px;
+  box-shadow: var(--shadow);
+  color: #fff4d6;
+  font-weight: 700;
+  left: 50%;
+  max-width: calc(100vw - 32px);
+  opacity: 0;
+  padding: 12px 20px;
+  pointer-events: none;
+  position: fixed;
+  transform: translate(-50%, 20px);
+  transition:
+    opacity 240ms ease,
+    transform 240ms ease;
+  z-index: 20;
+}
+
+.toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.confetti {
+  left: 50%;
+  pointer-events: none;
+  position: fixed;
+  top: 45%;
+  z-index: 19;
+}
+
+.confetti span {
+  animation: confettiBurst 1.1s ease-out forwards;
+  background: hsl(var(--hue), 85%, 65%);
+  border-radius: 2px;
+  height: 10px;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 6px;
+}
+
+html[data-theme="light"] .sky-caption,
+html[data-theme="light"] .challenge-scoreboard div,
+html[data-theme="light"] .challenge-now,
+html[data-theme="light"] .challenge-questions,
+html[data-theme="light"] .challenge-reveal,
+html[data-theme="light"] .challenge-option,
+html[data-theme="light"] .lore-card,
+html[data-theme="light"] .badge-card {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(65, 107, 139, 0.18);
+}
+
+html[data-theme="light"] .challenge-option.is-picked {
+  background: rgba(55, 142, 204, 0.16);
+  border-color: rgba(47, 138, 199, 0.7);
+}
+
+html[data-theme="light"] .challenge-option.is-correct {
+  background: rgba(60, 160, 100, 0.16);
+  border-color: rgba(48, 140, 86, 0.8);
+}
+
+html[data-theme="light"] .challenge-option.is-wrong {
+  background: rgba(220, 120, 60, 0.14);
+  border-color: rgba(200, 104, 48, 0.8);
+}
+
+html[data-theme="light"] .badge-card.is-earned,
+html[data-theme="light"] .challenge-reveal.is-perfect {
+  border-color: rgba(214, 150, 30, 0.6);
+}
+
+html[data-theme="light"] .hero-link,
+html[data-theme="light"] .eyebrow,
+html[data-theme="light"] .kicker,
+html[data-theme="light"] .hero-card-label,
+html[data-theme="light"] .timeline-label,
+html[data-theme="light"] .scenario-meta {
+  color: #1f6fa6;
+}
+
+html[data-theme="light"] .toast {
+  background: rgba(255, 255, 255, 0.97);
+  color: #5a3d00;
+}
+
+@keyframes cloudDrift {
+  0% {
+    transform: translateX(-6px);
+  }
+  100% {
+    transform: translateX(10px);
+  }
+}
+
+@keyframes skyRain {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+@keyframes skyFlash {
+  0%,
+  88%,
+  92%,
+  100% {
+    opacity: 0;
+  }
+  89%,
+  91% {
+    opacity: 0.45;
+  }
+}
+
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes flipIn {
+  0% {
+    opacity: 0.2;
+    transform: rotateY(90deg);
+  }
+  100% {
+    opacity: 1;
+    transform: rotateY(0);
+  }
+}
+
+@keyframes confettiBurst {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), calc(var(--dy) + 60px)) rotate(540deg);
+  }
+}
+
 @keyframes floatOrb {
   0%,
   100% {
@@ -1117,6 +1839,10 @@ html[data-theme="light"] .graph-focus {
   .notes-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .challenge-body {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 820px) {
@@ -1171,5 +1897,52 @@ html[data-theme="light"] .graph-focus {
 
   .map-scene {
     min-height: 420px;
+  }
+
+  .challenge-panel,
+  .lore-panel,
+  .badges-panel,
+  .sky-panel {
+    padding: 18px;
+  }
+
+  .challenge-scoreboard,
+  .lore-grid,
+  .badge-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lore-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .challenge-row {
+    grid-template-columns: 1fr;
+  }
+
+  .challenge-actions {
+    justify-content: stretch;
+  }
+
+  .challenge-actions button {
+    flex: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .badge-grid,
+  .detective-charts {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }

@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check:js": "node --check js/data.js && node --check js/i18n.js && node --check js/simulator.js && node --check js/learning.js && node --check js/app.js",
+    "check:js": "node --check js/data.js && node --check js/i18n.js && node --check js/simulator.js && node --check js/charts.js && node --check js/play.js && node --check js/learning.js && node --check js/app.js",
     "serve": "python3 -m http.server 4173"
   }
 }

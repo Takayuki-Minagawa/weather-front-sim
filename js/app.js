@@ -1,4 +1,5 @@
-import { FRONTS, LOCATIONS, METRICS, SCENARIO_PRESETS, STUDY_NOTES } from "./data.js";
+import { FRONTS, LOCATIONS, METRICS, QUIZZES, SCENARIO_PRESETS, STUDY_NOTES } from "./data.js";
+import { buildSparkline } from "./charts.js";
 import { generateLearningHTML, generateQuizHTML } from "./learning.js";
 import {
   SPEED_OPTIONS,
@@ -11,16 +12,61 @@ import {
   getText,
   localizeSnapshot
 } from "./i18n.js";
+import {
+  BADGES,
+  TRIVIA,
+  collectNewBadges,
+  createEmptyProgress,
+  createRound,
+  getBadgeCopy,
+  getRank,
+  isRoundReady,
+  normalizeProgress,
+  recordLore,
+  recordQuiz,
+  recordTrivia,
+  recordView,
+  renderBadges,
+  renderChallenge,
+  renderLore,
+  renderSkyWindow,
+  scoreRound
+} from "./play.js";
 import { getMapState, getSeries, getSnapshot } from "./simulator.js";
 
 const STORAGE_KEYS = {
   theme: "weather-front-sim-theme",
-  language: "weather-front-sim-language"
+  language: "weather-front-sim-language",
+  progress: "weather-front-sim-progress"
 };
 
+function readStorage(key) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeStorage(key, value) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Storage can be unavailable (private mode, blocked site data); the app works without it.
+  }
+}
+
 function getStoredPreference(key, allowed, fallback) {
-  const value = window.localStorage.getItem(key);
+  const value = readStorage(key);
   return allowed.includes(value) ? value : fallback;
+}
+
+function getStoredProgress() {
+  try {
+    return normalizeProgress(JSON.parse(readStorage(STORAGE_KEYS.progress)));
+  } catch {
+    return createEmptyProgress();
+  }
 }
 
 const state = {
@@ -33,7 +79,10 @@ const state = {
   quizSelection: null,
   userAction: "Initial Load",
   theme: getStoredPreference(STORAGE_KEYS.theme, ["dark", "light"], "dark"),
-  language: getStoredPreference(STORAGE_KEYS.language, ["ja", "en"], "ja")
+  language: getStoredPreference(STORAGE_KEYS.language, ["ja", "en"], "ja"),
+  progress: getStoredProgress(),
+  round: createRound(),
+  triviaIndex: Math.floor(Math.random() * TRIVIA.length)
 };
 
 const elements = {
@@ -90,10 +139,32 @@ const elements = {
   learningContent: document.querySelector("#learningContent"),
   explainButton: document.querySelector("#explainButton"),
   quizButton: document.querySelector("#quizButton"),
-  studyNotes: document.querySelector("#studyNotes")
+  studyNotes: document.querySelector("#studyNotes"),
+  shortcutHint: document.querySelector("#shortcutHint"),
+  skyKicker: document.querySelector("#skyKicker"),
+  skyTitle: document.querySelector("#skyTitle"),
+  skyNote: document.querySelector("#skyNote"),
+  skyWindow: document.querySelector("#skyWindow"),
+  challengeKicker: document.querySelector("#challengeKicker"),
+  challengeTitle: document.querySelector("#challengeTitle"),
+  challengeNote: document.querySelector("#challengeNote"),
+  challengeContent: document.querySelector("#challengeContent"),
+  loreKicker: document.querySelector("#loreKicker"),
+  loreTitle: document.querySelector("#loreTitle"),
+  loreNote: document.querySelector("#loreNote"),
+  loreReset: document.querySelector("#loreReset"),
+  loreGrid: document.querySelector("#loreGrid"),
+  badgesKicker: document.querySelector("#badgesKicker"),
+  badgesTitle: document.querySelector("#badgesTitle"),
+  badgesNote: document.querySelector("#badgesNote"),
+  badgesReset: document.querySelector("#badgesReset"),
+  badgeCount: document.querySelector("#badgeCount"),
+  badgeGrid: document.querySelector("#badgeGrid"),
+  toast: document.querySelector("#toast")
 };
 
 let playbackTimer = null;
+let toastTimer = null;
 
 function renderToggleGroups() {
   elements.themeToggle.setAttribute("aria-label", getText("themeAria", state.language));
@@ -119,21 +190,28 @@ function renderToggleGroups() {
 }
 
 function renderHeroStats() {
+  const rank = getRank(state.progress.score, state.language);
+  const rankBody = getText("heroRankBody", state.language)
+    .replace("{badges}", String(state.progress.earned.length))
+    .replace("{total}", String(BADGES.length))
+    .replace("{score}", String(state.progress.score));
+
   elements.heroStats.innerHTML = `
     <article class="hero-card">
       <span class="hero-card-label">${getText("heroObserveLabel", state.language)}</span>
       <strong>${getText("heroObserveTitle", state.language)}</strong>
       <p>${getText("heroObserveBody", state.language)}</p>
     </article>
-    <article class="hero-card">
-      <span class="hero-card-label">${getText("heroTutorLabel", state.language)}</span>
-      <strong>${getText("heroTutorTitle", state.language)}</strong>
-      <p>${getText("heroTutorBody", state.language)}</p>
+    <article class="hero-card hero-rank">
+      <span class="hero-card-label">${getText("heroRankLabel", state.language)}</span>
+      <strong>${rank.label}</strong>
+      <p>${rankBody}</p>
+      <a class="hero-link" href="#challenge">${getText("heroRankCta", state.language)} →</a>
     </article>
-    <article class="hero-card">
-      <span class="hero-card-label">${getText("heroPublishLabel", state.language)}</span>
-      <strong>${getText("heroPublishTitle", state.language)}</strong>
-      <p>${getText("heroPublishBody", state.language)}</p>
+    <article class="hero-card hero-trivia">
+      <span class="hero-card-label">💡 ${getText("heroTriviaLabel", state.language)} ${state.triviaIndex + 1}/${TRIVIA.length}</span>
+      <p>${TRIVIA[state.triviaIndex][state.language]}</p>
+      <button type="button" class="secondary-button trivia-next" data-trivia-next="true">${getText("heroTriviaNext", state.language)}</button>
     </article>
   `;
 }
@@ -152,7 +230,6 @@ function renderStaticText() {
   elements.heroEyebrow.textContent = getText("heroEyebrow", state.language);
   elements.heroTitle.textContent = getText("heroTitle", state.language);
   elements.heroLead.innerHTML = getText("heroLead", state.language);
-  renderHeroStats();
   renderToggleGroups();
 
   elements.controlsKicker.textContent = getText("controlsKicker", state.language);
@@ -188,6 +265,22 @@ function renderStaticText() {
   elements.notesKicker.textContent = getText("notesKicker", state.language);
   elements.notesTitle.textContent = getText("notesTitle", state.language);
   elements.notesNote.textContent = getText("notesNote", state.language);
+
+  elements.shortcutHint.textContent = getText("shortcutHint", state.language);
+  elements.skyKicker.textContent = getText("skyKicker", state.language);
+  elements.skyTitle.textContent = getText("skyTitle", state.language);
+  elements.skyNote.textContent = getText("skyNote", state.language);
+  elements.challengeKicker.textContent = getText("challengeKicker", state.language);
+  elements.challengeTitle.textContent = getText("challengeTitle", state.language);
+  elements.challengeNote.textContent = getText("challengeNote", state.language);
+  elements.loreKicker.textContent = getText("loreKicker", state.language);
+  elements.loreTitle.textContent = getText("loreTitle", state.language);
+  elements.loreNote.textContent = getText("loreNote", state.language);
+  elements.loreReset.textContent = getText("loreReset", state.language);
+  elements.badgesKicker.textContent = getText("badgesKicker", state.language);
+  elements.badgesTitle.textContent = getText("badgesTitle", state.language);
+  elements.badgesNote.textContent = getText("badgesNote", state.language);
+  elements.badgesReset.textContent = getText("badgesReset", state.language);
 }
 
 function renderFrontSelector() {
@@ -265,37 +358,6 @@ function renderStudyNotes() {
       </article>
     `;
   }).join("");
-}
-
-function buildSparkline(series, metricKey, color, currentHour, label) {
-  const width = 320;
-  const height = 120;
-  const padding = 12;
-  const values = series.map((point) => point[metricKey]);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = Math.max(max - min, 1);
-
-  const coordinates = series.map((point, index) => {
-    const x = padding + (index / (series.length - 1)) * (width - padding * 2);
-    const y = height - padding - ((point[metricKey] - min) / range) * (height - padding * 2);
-    return { x, y, hour: point.hour };
-  });
-
-  const linePath = coordinates.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ");
-  const fillPath = `${linePath} L ${coordinates[coordinates.length - 1].x} ${height - padding} L ${coordinates[0].x} ${height - padding} Z`;
-  const currentPoint = coordinates.find((point) => point.hour === currentHour) ?? coordinates[0];
-
-  return `
-    <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${label}">
-      <path class="graph-base" d="M ${padding} ${height - padding} L ${width - padding} ${height - padding}" />
-      <path class="graph-base" d="M ${padding} ${padding} L ${padding} ${height - padding}" />
-      <path class="graph-fill" d="${fillPath}" fill="${color}" />
-      <path class="graph-line" d="${linePath}" stroke="${color}" />
-      <path class="graph-focus" d="M ${currentPoint.x} ${padding} L ${currentPoint.x} ${height - padding}" />
-      <circle class="graph-point" cx="${currentPoint.x}" cy="${currentPoint.y}" r="4.4" />
-    </svg>
-  `;
 }
 
 function renderMetricCards(series, snapshot) {
@@ -658,6 +720,59 @@ function updateHeadline(snapshot) {
     : getText("playStart", state.language);
 }
 
+function renderPlay() {
+  renderHeroStats();
+  elements.challengeContent.innerHTML = renderChallenge(state.round, state.progress, state.language);
+  elements.loreGrid.innerHTML = renderLore(state.progress, state.language);
+  elements.badgeGrid.innerHTML = renderBadges(state.progress, state.language);
+  elements.badgeCount.textContent = `${state.progress.earned.length} / ${BADGES.length}`;
+}
+
+function showToast(message) {
+  elements.toast.textContent = message;
+  elements.toast.classList.add("is-visible");
+
+  if (toastTimer !== null) {
+    window.clearTimeout(toastTimer);
+  }
+
+  toastTimer = window.setTimeout(() => {
+    elements.toast.classList.remove("is-visible");
+    toastTimer = null;
+  }, 3200);
+}
+
+function celebrate() {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const burst = document.createElement("div");
+  burst.className = "confetti";
+  burst.setAttribute("aria-hidden", "true");
+  burst.innerHTML = Array.from({ length: 18 }, (_, index) => {
+    const angle = (index / 18) * Math.PI * 2;
+    const distance = 90 + (index % 3) * 40;
+    return `<span style="--dx:${Math.cos(angle) * distance}px; --dy:${Math.sin(angle) * distance}px; --hue:${(index * 47) % 360}"></span>`;
+  }).join("");
+  document.body.append(burst);
+  window.setTimeout(() => burst.remove(), 1200);
+}
+
+function updateProgress(nextProgress) {
+  if (nextProgress === state.progress) return;
+
+  const { progress, fresh } = collectNewBadges(nextProgress);
+  state.progress = progress;
+  writeStorage(STORAGE_KEYS.progress, JSON.stringify(progress));
+
+  if (fresh.length > 0) {
+    const titles = fresh.map((badge) => `${badge.icon} ${getBadgeCopy(badge, state.language).title}`).join(" / ");
+    showToast(`${getText("badgeToast", state.language)}: ${titles}`);
+    celebrate();
+  }
+
+  renderPlay();
+}
+
 function render() {
   renderStaticText();
   renderFrontSelector();
@@ -676,6 +791,13 @@ function render() {
   renderMetricCards(series, snapshot);
   renderLegend(snapshot);
   renderLearning(snapshot, series);
+  elements.skyWindow.innerHTML = renderSkyWindow(snapshot, state.language);
+  updateProgress(recordView(state.progress, state.frontKey, state.locationKey, state.hour));
+}
+
+function renderAll() {
+  render();
+  renderPlay();
 }
 
 function stopPlayback() {
@@ -704,6 +826,17 @@ function togglePlayback() {
     startPlayback();
   }
   render();
+}
+
+function scoreCurrentRound() {
+  const { round, progress } = scoreRound(state.round, state.progress);
+  state.round = round;
+  updateProgress(progress);
+  elements.challengeContent.querySelector("[data-challenge-action]")?.focus();
+
+  if (round.perfect) {
+    celebrate();
+  }
 }
 
 function bindEvents() {
@@ -786,6 +919,10 @@ function bindEvents() {
     if (option) {
       state.quizSelection = Number(option.dataset.quizOption);
       render();
+
+      if (state.quizSelection === QUIZZES[state.frontKey].correctIndex) {
+        updateProgress(recordQuiz(state.progress, state.frontKey));
+      }
       return;
     }
 
@@ -802,8 +939,8 @@ function bindEvents() {
     if (!target) return;
 
     state.theme = target.dataset.themeChoice;
-    window.localStorage.setItem(STORAGE_KEYS.theme, state.theme);
-    render();
+    writeStorage(STORAGE_KEYS.theme, state.theme);
+    renderAll();
   });
 
   elements.languageToggle.addEventListener("click", (event) => {
@@ -811,8 +948,100 @@ function bindEvents() {
     if (!target) return;
 
     state.language = target.dataset.languageChoice;
-    window.localStorage.setItem(STORAGE_KEYS.language, state.language);
-    render();
+    writeStorage(STORAGE_KEYS.language, state.language);
+    renderAll();
+  });
+
+  elements.heroStats.addEventListener("click", (event) => {
+    if (!event.target.closest("[data-trivia-next]")) return;
+
+    state.triviaIndex = (state.triviaIndex + 1) % TRIVIA.length;
+    renderHeroStats();
+    elements.heroStats.querySelector("[data-trivia-next]")?.focus();
+    updateProgress(recordTrivia(state.progress, state.triviaIndex));
+  });
+
+  elements.challengeContent.addEventListener("click", (event) => {
+    const pick = event.target.closest("[data-challenge-pick]");
+
+    if (pick && !state.round.revealed) {
+      const [group, value] = pick.dataset.challengePick.split(":");
+      state.round = { ...state.round, picks: { ...state.round.picks, [group]: value } };
+
+      if (state.round.type === "detective") {
+        scoreCurrentRound();
+      } else {
+        renderPlay();
+        elements.challengeContent.querySelector(`[data-challenge-pick="${group}:${value}"]`)?.focus();
+      }
+      return;
+    }
+
+    const action = event.target.closest("[data-challenge-action]")?.dataset.challengeAction;
+
+    if (action === "check" && isRoundReady(state.round)) {
+      scoreCurrentRound();
+      return;
+    }
+
+    if (action === "next") {
+      state.round = createRound();
+      renderPlay();
+      elements.challengeContent.querySelector("button:not([disabled])")?.focus();
+      return;
+    }
+
+    if (action === "simulate") {
+      state.frontKey = state.round.frontKey;
+      state.locationKey = state.round.locationKey;
+      state.hour = state.round.fromHour;
+      state.userAction = "Front Changed";
+      state.learningMode = "explain";
+      state.quizSelection = null;
+      startPlayback();
+      render();
+      document.querySelector(".map-panel").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
+
+  elements.loreGrid.addEventListener("click", (event) => {
+    const target = event.target.closest("[data-lore]");
+    if (!target) return;
+
+    const [index, choice] = target.dataset.lore.split(":");
+    updateProgress(recordLore(state.progress, Number(index), choice));
+  });
+
+  elements.loreReset.addEventListener("click", () => {
+    updateProgress({ ...state.progress, lore: {} });
+  });
+
+  elements.badgesReset.addEventListener("click", () => {
+    if (!window.confirm(getText("badgesResetConfirm", state.language))) return;
+
+    state.progress = createEmptyProgress();
+    writeStorage(STORAGE_KEYS.progress, JSON.stringify(state.progress));
+    state.round = createRound();
+    renderAll();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
+    if (event.target.closest("input, select, textarea, button, a, [contenteditable]")) return;
+
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      event.preventDefault();
+      stopPlayback();
+      state.hour = Math.max(-12, Math.min(12, state.hour + (event.key === "ArrowRight" ? 1 : -1)));
+      state.userAction = "Timeline";
+      render();
+      return;
+    }
+
+    if (event.key === " ") {
+      event.preventDefault();
+      togglePlayback();
+    }
   });
 
   window.addEventListener("beforeunload", () => {
@@ -824,7 +1053,8 @@ function init() {
   document.documentElement.dataset.theme = state.theme;
   document.documentElement.lang = state.language;
   bindEvents();
-  render();
+  renderAll();
+  updateProgress(recordTrivia(state.progress, state.triviaIndex));
 }
 
 init();
