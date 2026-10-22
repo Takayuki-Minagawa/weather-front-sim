@@ -1111,6 +1111,12 @@ html[data-theme="light"] .graph-focus {
   width: 100%;
 }
 
+.sky-frame .sky-overlay {
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
 .sky-top.clear { stop-color: #3d9be0; }
 .sky-bottom.clear { stop-color: #bfe6ff; }
 .sky-top.partly-cloudy { stop-color: #4f9fd6; }
@@ -1327,7 +1333,13 @@ html[data-theme="light"] .graph-focus {
 
 .challenge-prompt {
   font-weight: 700;
-  margin: 0 0 14px;
+  margin: 0 0 4px;
+}
+
+.challenge-rule {
+  color: var(--muted);
+  font-size: 0.86rem;
+  margin: 0 0 10px;
 }
 
 .challenge-row {
@@ -1485,8 +1497,13 @@ html[data-theme="light"] .graph-focus {
   padding: 16px;
 }
 
-.lore-card.is-flipped {
+.lore-card.is-flipping {
   animation: flipIn 420ms ease;
+}
+
+.lore-card:focus-visible {
+  outline: 2px solid #8dd7ff;
+  outline-offset: 2px;
 }
 
 .lore-card.verdict-science {
@@ -1555,14 +1572,16 @@ html[data-theme="light"] .graph-focus {
   display: grid;
   gap: 2px 12px;
   grid-template-columns: auto minmax(0, 1fr);
-  opacity: 0.62;
   padding: 12px 14px;
+}
+
+.badge-card:not(.is-earned) .badge-icon {
+  color: var(--muted);
 }
 
 .badge-card.is-earned {
   border-style: solid;
   border-color: rgba(255, 208, 114, 0.5);
-  opacity: 1;
 }
 
 .badge-icon {

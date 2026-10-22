@@ -145,6 +145,7 @@ const elements = {
   skyTitle: document.querySelector("#skyTitle"),
   skyNote: document.querySelector("#skyNote"),
   skyWindow: document.querySelector("#skyWindow"),
+  challengeStatus: document.querySelector("#challengeStatus"),
   challengeKicker: document.querySelector("#challengeKicker"),
   challengeTitle: document.querySelector("#challengeTitle"),
   challengeNote: document.querySelector("#challengeNote"),
@@ -165,6 +166,14 @@ const elements = {
 
 let playbackTimer = null;
 let toastTimer = null;
+let skySceneKey = null;
+
+// Data attributes that identify a focusable control across renderPlay() re-renders.
+const FOCUS_KEYS = ["challengePick", "challengeAction", "lore", "loreCard", "triviaNext"];
+
+function prefersReducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
 
 function renderToggleGroups() {
   elements.themeToggle.setAttribute("aria-label", getText("themeAria", state.language));
@@ -720,12 +729,39 @@ function updateHeadline(snapshot) {
     : getText("playStart", state.language);
 }
 
-function renderPlay() {
+function getFocusSelector() {
+  const active = document.activeElement;
+  const key = FOCUS_KEYS.find((name) => active?.dataset?.[name] !== undefined);
+  if (!key) return null;
+
+  const attribute = key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+  return `[data-${attribute}="${CSS.escape(active.dataset[key])}"]`;
+}
+
+function renderPlay({ flippingLore = null } = {}) {
+  const focusSelector = getFocusSelector();
+
   renderHeroStats();
   elements.challengeContent.innerHTML = renderChallenge(state.round, state.progress, state.language);
-  elements.loreGrid.innerHTML = renderLore(state.progress, state.language);
+  elements.loreGrid.innerHTML = renderLore(state.progress, state.language, flippingLore);
   elements.badgeGrid.innerHTML = renderBadges(state.progress, state.language);
   elements.badgeCount.textContent = `${state.progress.earned.length} / ${BADGES.length}`;
+
+  if (focusSelector) {
+    document.querySelector(focusSelector)?.focus({ preventScroll: true });
+  }
+}
+
+function renderSky(snapshot) {
+  const sky = renderSkyWindow(snapshot, state.language);
+
+  if (sky.key !== skySceneKey) {
+    elements.skyWindow.innerHTML = sky.scene;
+    skySceneKey = sky.key;
+  }
+
+  elements.skyWindow.querySelector("[data-sky-windsock]").innerHTML = sky.windsock;
+  elements.skyWindow.querySelector("[data-sky-badges]").innerHTML = sky.badges;
 }
 
 function showToast(message) {
@@ -743,7 +779,7 @@ function showToast(message) {
 }
 
 function celebrate() {
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if (prefersReducedMotion()) return;
 
   const burst = document.createElement("div");
   burst.className = "confetti";
@@ -757,7 +793,7 @@ function celebrate() {
   window.setTimeout(() => burst.remove(), 1200);
 }
 
-function updateProgress(nextProgress) {
+function updateProgress(nextProgress, renderOptions) {
   if (nextProgress === state.progress) return;
 
   const { progress, fresh } = collectNewBadges(nextProgress);
@@ -770,7 +806,7 @@ function updateProgress(nextProgress) {
     celebrate();
   }
 
-  renderPlay();
+  renderPlay(renderOptions);
 }
 
 function render() {
@@ -791,7 +827,7 @@ function render() {
   renderMetricCards(series, snapshot);
   renderLegend(snapshot);
   renderLearning(snapshot, series);
-  elements.skyWindow.innerHTML = renderSkyWindow(snapshot, state.language);
+  renderSky(snapshot);
   updateProgress(recordView(state.progress, state.frontKey, state.locationKey, state.hour));
 }
 
@@ -833,6 +869,10 @@ function scoreCurrentRound() {
   state.round = round;
   updateProgress(progress);
   elements.challengeContent.querySelector("[data-challenge-action]")?.focus();
+  elements.challengeStatus.textContent = elements.challengeContent
+    .querySelector(".challenge-reveal")
+    ?.textContent.replace(/\s+/g, " ")
+    .trim() ?? "";
 
   if (round.perfect) {
     celebrate();
@@ -956,9 +996,14 @@ function bindEvents() {
     if (!event.target.closest("[data-trivia-next]")) return;
 
     state.triviaIndex = (state.triviaIndex + 1) % TRIVIA.length;
-    renderHeroStats();
-    elements.heroStats.querySelector("[data-trivia-next]")?.focus();
-    updateProgress(recordTrivia(state.progress, state.triviaIndex));
+    const nextProgress = recordTrivia(state.progress, state.triviaIndex);
+
+    if (nextProgress === state.progress) {
+      renderHeroStats();
+      elements.heroStats.querySelector("[data-trivia-next]")?.focus();
+    } else {
+      updateProgress(nextProgress);
+    }
   });
 
   elements.challengeContent.addEventListener("click", (event) => {
@@ -967,13 +1012,7 @@ function bindEvents() {
     if (pick && !state.round.revealed) {
       const [group, value] = pick.dataset.challengePick.split(":");
       state.round = { ...state.round, picks: { ...state.round.picks, [group]: value } };
-
-      if (state.round.type === "detective") {
-        scoreCurrentRound();
-      } else {
-        renderPlay();
-        elements.challengeContent.querySelector(`[data-challenge-pick="${group}:${value}"]`)?.focus();
-      }
+      renderPlay();
       return;
     }
 
@@ -986,6 +1025,7 @@ function bindEvents() {
 
     if (action === "next") {
       state.round = createRound();
+      elements.challengeStatus.textContent = "";
       renderPlay();
       elements.challengeContent.querySelector("button:not([disabled])")?.focus();
       return;
@@ -1000,7 +1040,11 @@ function bindEvents() {
       state.quizSelection = null;
       startPlayback();
       render();
-      document.querySelector(".map-panel").scrollIntoView({ behavior: "smooth", block: "start" });
+      document.querySelector(".map-panel").scrollIntoView({
+        behavior: prefersReducedMotion() ? "auto" : "smooth",
+        block: "start"
+      });
+      elements.playButton.focus({ preventScroll: true });
     }
   });
 
@@ -1009,7 +1053,8 @@ function bindEvents() {
     if (!target) return;
 
     const [index, choice] = target.dataset.lore.split(":");
-    updateProgress(recordLore(state.progress, Number(index), choice));
+    updateProgress(recordLore(state.progress, Number(index), choice), { flippingLore: Number(index) });
+    elements.loreGrid.querySelector(`[data-lore-card="${index}"]`)?.focus();
   });
 
   elements.loreReset.addEventListener("click", () => {
@@ -1027,7 +1072,7 @@ function bindEvents() {
 
   document.addEventListener("keydown", (event) => {
     if (event.altKey || event.ctrlKey || event.metaKey) return;
-    if (event.target.closest("input, select, textarea, button, a, [contenteditable]")) return;
+    if (event.target.closest("input, select, textarea, [contenteditable]")) return;
 
     if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
       event.preventDefault();
@@ -1038,7 +1083,8 @@ function bindEvents() {
       return;
     }
 
-    if (event.key === " ") {
+    // Space keeps its native meaning (activate) on buttons and links.
+    if (event.key === " " && !event.target.closest("button, a")) {
       event.preventDefault();
       togglePlayback();
     }

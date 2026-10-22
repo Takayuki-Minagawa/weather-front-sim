@@ -3,7 +3,7 @@ import { buildSparkline } from "./charts.js";
 import { formatOffset, getFrontCopy, getLocationCopy, getText, getWeatherLabel, localizeSnapshot } from "./i18n.js";
 import { getSeries, getSnapshot } from "./simulator.js";
 
-export const WEATHER_ICONS = {
+const WEATHER_ICONS = {
   clear: "☀️",
   "partly-cloudy": "⛅",
   cloudy: "☁️",
@@ -33,12 +33,12 @@ const SKY_COPY = {
     cumulonimbus: { nickname: "Thunderhead", tip: "A towering cloud grows fast. Watch out for downpours, lightning, and gusts!" },
     stratus: { nickname: "Fog cloud", tip: "A low, flat layer near the ground. On hills it looks just like fog." },
     cumulus: { nickname: "Cotton cloud", tip: "Fair-weather puffs, formed by air rising from sun-warmed ground." },
-    stratocumulus: { nickname: "Roll cloud", tip: "Lumpy rolls lined up in rows, common once a front has passed." },
+    stratocumulus: { nickname: "Lumpy layer cloud", tip: "Lumpy patches lined up in rows, common once a front has passed." },
     altocumulus: { nickname: "Sheep cloud", tip: "Small cloudlets gathered like a flock, often seen as the weather is about to change." }
   }
 };
 
-export const LORE = [
+const LORE = [
   {
     verdict: "science",
     ja: {
@@ -141,8 +141,8 @@ export const TRIVIA = [
     en: "The word \"front\" was introduced around World War I by Bjerknes and colleagues in Bergen, Norway. It is often said they likened clashing air masses to a battlefront."
   },
   {
-    ja: "天気図の ▲ や半円の記号は、前線が進む側につけます。記号を見れば、前線がどちらへ動いているかがわかります。",
-    en: "The triangles and half-circles on a weather map sit on the side the front is moving toward, so the symbols tell you its direction."
+    ja: "天気図の ▲ や半円の記号は、前線が進む側につけます。記号を見れば、前線がどちらへ動いているかがわかります（停滞前線だけは、両側に交互につけます）。",
+    en: "The triangles and half-circles on a weather map sit on the side the front is moving toward, so the symbols tell you its direction (a stationary front alternates them on both sides)."
   },
   {
     ja: "寒冷前線が通過するときには、「疾風（はやて）」と呼ばれる突風が吹くことがあります。",
@@ -172,7 +172,7 @@ export const TRIVIA = [
 
 export const BADGES = [
   { key: "allFronts", icon: "🌀", ja: ["前線コレクター", "4種類の前線をすべて表示した"], en: ["Front Collector", "Viewed all four front types"] },
-  { key: "fullDay", icon: "⏱️", ja: ["24時間ウォッチャー", "ひとつの前線を -12h から +12h まで見届けた"], en: ["24-Hour Watcher", "Watched one front from -12h to +12h"] },
+  { key: "fullDay", icon: "⏱️", ja: ["24時間ウォッチャー", "ひとつの前線の -12h〜+12h をすべての時刻で見届けた"], en: ["24-Hour Watcher", "Watched every hour of one front, from -12h to +12h"] },
   { key: "traveler", icon: "🧭", ja: ["全国行脚", "すべての観測地点をめぐった"], en: ["Grand Tour", "Visited every observation point"] },
   { key: "quizMaster", icon: "🎓", ja: ["クイズ王", "4つの前線クイズすべてに正解した"], en: ["Quiz Champion", "Answered all four front quizzes correctly"] },
   { key: "streak", icon: "🔥", ja: ["連続的中", "予報士チャレンジで3問連続パーフェクト"], en: ["Hot Streak", "Three perfect challenge rounds in a row"] },
@@ -188,7 +188,8 @@ const RANKS = [
   { min: 300, ja: "空読みマスター", en: "Sky-Reading Master" }
 ];
 
-export const STREAK_GOAL = 3;
+const STREAK_GOAL = 3;
+const FULL_DAY_MASK = 2 ** 25 - 1;
 
 const TREND_OPTIONS = ["up", "flat", "down"];
 
@@ -196,7 +197,7 @@ export function createEmptyProgress() {
   return {
     fronts: [],
     locations: [],
-    timeline: {},
+    hours: {},
     quizzes: [],
     lore: {},
     trivia: [],
@@ -204,28 +205,52 @@ export function createEmptyProgress() {
     score: 0,
     streak: 0,
     bestStreak: 0,
-    rounds: 0,
     earned: []
   };
 }
 
+function keepKnown(list, known) {
+  return Array.isArray(list) ? [...new Set(list.filter((value) => known.includes(value)))] : [];
+}
+
+function toCount(value) {
+  return Number.isInteger(value) && value >= 0 ? value : 0;
+}
+
 export function normalizeProgress(raw) {
   const base = createEmptyProgress();
-  if (!raw || typeof raw !== "object") return base;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return base;
+
+  const frontKeys = Object.keys(FRONTS);
+  const hours = {};
+  const lore = {};
+
+  if (raw.hours && typeof raw.hours === "object") {
+    frontKeys.forEach((frontKey) => {
+      const mask = raw.hours[frontKey];
+      if (Number.isInteger(mask) && mask > 0) hours[frontKey] = mask & FULL_DAY_MASK;
+    });
+  }
+
+  if (raw.lore && typeof raw.lore === "object") {
+    LORE.forEach((_, index) => {
+      if (["likely", "myth"].includes(raw.lore[index])) lore[index] = raw.lore[index];
+    });
+  }
 
   return {
-    fronts: Array.isArray(raw.fronts) ? raw.fronts : base.fronts,
-    locations: Array.isArray(raw.locations) ? raw.locations : base.locations,
-    timeline: raw.timeline && typeof raw.timeline === "object" ? raw.timeline : base.timeline,
-    quizzes: Array.isArray(raw.quizzes) ? raw.quizzes : base.quizzes,
-    lore: raw.lore && typeof raw.lore === "object" ? raw.lore : base.lore,
-    trivia: Array.isArray(raw.trivia) ? raw.trivia : base.trivia,
+    ...base,
+    fronts: keepKnown(raw.fronts, frontKeys),
+    locations: keepKnown(raw.locations, Object.keys(LOCATIONS)),
+    hours,
+    quizzes: keepKnown(raw.quizzes, frontKeys),
+    lore,
+    trivia: keepKnown(raw.trivia, TRIVIA.map((_, index) => index)),
     detective: raw.detective === true,
-    score: Number.isFinite(raw.score) ? raw.score : base.score,
-    streak: Number.isFinite(raw.streak) ? raw.streak : base.streak,
-    bestStreak: Number.isFinite(raw.bestStreak) ? raw.bestStreak : base.bestStreak,
-    rounds: Number.isFinite(raw.rounds) ? raw.rounds : base.rounds,
-    earned: Array.isArray(raw.earned) ? raw.earned : base.earned
+    score: toCount(raw.score),
+    streak: toCount(raw.streak),
+    bestStreak: toCount(raw.bestStreak),
+    earned: keepKnown(raw.earned, BADGES.map((badge) => badge.key))
   };
 }
 
@@ -233,12 +258,13 @@ function addUnique(list, value) {
   return list.includes(value) ? list : [...list, value];
 }
 
+// Every record* helper returns the same object when nothing changed, so callers can skip re-rendering.
 export function recordView(progress, frontKey, locationKey, hour) {
-  const edges = progress.timeline[frontKey] ?? { start: false, end: false };
+  const mask = progress.hours[frontKey] ?? 0;
+  const bit = 2 ** (hour + 12);
   const isKnown = progress.fronts.includes(frontKey)
     && progress.locations.includes(locationKey)
-    && (hour !== -12 || edges.start)
-    && (hour !== 12 || edges.end);
+    && (mask & bit) !== 0;
 
   if (isKnown) return progress;
 
@@ -246,31 +272,25 @@ export function recordView(progress, frontKey, locationKey, hour) {
     ...progress,
     fronts: addUnique(progress.fronts, frontKey),
     locations: addUnique(progress.locations, locationKey),
-    timeline: {
-      ...progress.timeline,
-      [frontKey]: {
-        start: edges.start || hour === -12,
-        end: edges.end || hour === 12
-      }
-    }
+    hours: { ...progress.hours, [frontKey]: mask | bit }
   };
 }
 
 export function recordQuiz(progress, frontKey) {
-  return { ...progress, quizzes: addUnique(progress.quizzes, frontKey) };
+  return progress.quizzes.includes(frontKey) ? progress : { ...progress, quizzes: [...progress.quizzes, frontKey] };
 }
 
 export function recordLore(progress, index, choice) {
-  return { ...progress, lore: { ...progress.lore, [index]: choice } };
+  return progress.lore[index] === choice ? progress : { ...progress, lore: { ...progress.lore, [index]: choice } };
 }
 
 export function recordTrivia(progress, index) {
-  return { ...progress, trivia: addUnique(progress.trivia, index) };
+  return progress.trivia.includes(index) ? progress : { ...progress, trivia: [...progress.trivia, index] };
 }
 
 function isBadgeEarned(key, progress) {
   if (key === "allFronts") return Object.keys(FRONTS).every((frontKey) => progress.fronts.includes(frontKey));
-  if (key === "fullDay") return Object.values(progress.timeline).some((edges) => edges.start && edges.end);
+  if (key === "fullDay") return Object.values(progress.hours).some((mask) => mask === FULL_DAY_MASK);
   if (key === "traveler") return Object.keys(LOCATIONS).every((locationKey) => progress.locations.includes(locationKey));
   if (key === "quizMaster") return Object.keys(FRONTS).every((frontKey) => progress.quizzes.includes(frontKey));
   if (key === "streak") return progress.bestStreak >= STREAK_GOAL;
@@ -378,7 +398,6 @@ export function scoreRound(round, progress) {
         score: progress.score + (correct ? 20 : 0),
         streak,
         bestStreak: Math.max(progress.bestStreak, streak),
-        rounds: progress.rounds + 1,
         detective: progress.detective || correct
       }
     };
@@ -394,10 +413,14 @@ export function scoreRound(round, progress) {
       ...progress,
       score: progress.score + hits * 10,
       streak,
-      bestStreak: Math.max(progress.bestStreak, streak),
-      rounds: progress.rounds + 1
+      bestStreak: Math.max(progress.bestStreak, streak)
     }
   };
+}
+
+function formatDelta(value, unit) {
+  const rounded = Number(value.toFixed(1));
+  return `${rounded > 0 ? "+" : ""}${rounded}${unit}`;
 }
 
 function trendLabel(trend, language) {
@@ -466,8 +489,8 @@ function renderForecastRound(round, language) {
         <strong>${round.perfect ? t("challengePerfect") : `+${round.earned} ${t("challengePoints")}`}</strong>
         <p>
           ${formatOffset(round.toHour, language)}: ${WEATHER_ICONS[to.weatherKey]} ${to.weatherLabel} /
-          ${to.temperatureC}°C (${from.temperatureC}°C →) /
-          ${to.pressureHpa}hPa (${from.pressureHpa}hPa →) /
+          ${to.temperatureC}°C (${formatDelta(to.temperatureC - from.temperatureC, "°C")}) /
+          ${to.pressureHpa}hPa (${formatDelta(to.pressureHpa - from.pressureHpa, "hPa")}) /
           ${t("pillWind")} ${from.windDirection} → ${to.windDirection}
         </p>
         <p>${getFrontCopy(round.frontKey, language).shortFocus}</p>
@@ -492,6 +515,7 @@ function renderForecastRound(round, language) {
 
       <div class="challenge-questions">
         <p class="challenge-prompt">${t("challengeForecastPrompt").replace("{hours}", String(hoursAhead))}</p>
+        <p class="challenge-rule">${t("challengeTrendRule")}</p>
         ${rows
           .map(
             (row) => `
@@ -580,9 +604,7 @@ export function renderChallenge(round, progress, language) {
       ${round.type === "forecast" ? `<button type="button" class="secondary-button" data-challenge-action="simulate">${t("challengeSimulate")}</button>` : ""}
       <button type="button" class="action-button" data-challenge-action="next">${t("challengeNext")}</button>
     `
-    : round.type === "forecast"
-      ? `<button type="button" class="action-button" data-challenge-action="check" ${ready ? "" : "disabled"}>${t("challengeCheck")}</button>`
-      : "";
+    : `<button type="button" class="action-button" data-challenge-action="check" ${ready ? "" : "disabled"}>${t("challengeCheck")}</button>`;
 
   return `
     <div class="challenge-scoreboard">
@@ -659,6 +681,8 @@ function cloudShapes(cloudKey) {
   `;
 }
 
+// The scene only changes with cloud type, weather, or language; the windsock and readouts change every hour.
+// Splitting them lets the caller keep the scene (and its running animations) between playback ticks.
 export function renderSkyWindow(snapshot, language) {
   const t = (key) => getText(key, language);
   const copy = SKY_COPY[language][snapshot.cloudKey];
@@ -689,6 +713,15 @@ export function renderSkyWindow(snapshot, language) {
   const sockLength = (8 + Math.min(snapshot.windSpeedMs, 14) * 2) * Math.max(0.35, Math.abs(toward));
   const droop = Math.max(2, 14 - snapshot.windSpeedMs);
   const sockTip = 30 + sockDirection * sockLength;
+  const windsock = `
+    <line class="sky-pole" x1="30" y1="126" x2="30" y2="90" />
+    <path class="sky-sock" d="M 30 90 L ${sockTip} ${90 + droop * 0.6} L ${sockTip} ${96 + droop * 0.6} L 30 98 Z" />
+  `;
+  const badges = `
+    <span class="sky-badge">${WEATHER_ICONS[snapshot.weatherKey]} ${snapshot.weatherLabel}</span>
+    <span class="sky-badge">${snapshot.temperatureC}°C</span>
+    <span class="sky-badge">${t("pillWind")} ${snapshot.windDirection} ${snapshot.windSpeedMs}m/s</span>
+  `;
 
   const person = raining
     ? `
@@ -707,7 +740,7 @@ export function renderSkyWindow(snapshot, language) {
       </g>
     `;
 
-  return `
+  const scene = `
     <div class="sky-frame">
       <svg viewBox="0 0 240 140" role="img" aria-label="${t("skyAria").replace("{cloud}", snapshot.cloudLabel).replace("{weather}", snapshot.weatherLabel)}">
         <defs>
@@ -731,25 +764,28 @@ export function renderSkyWindow(snapshot, language) {
           <rect x="168" y="100" width="16" height="16" /><polygon points="166,100 176,92 186,100" />
           <rect x="190" y="96" width="12" height="20" /><rect x="206" y="104" width="18" height="12" />
         </g>
-        <line class="sky-pole" x1="30" y1="126" x2="30" y2="90" />
-        <path class="sky-sock" d="M 30 90 L ${sockTip} ${90 + droop * 0.6} L ${sockTip} ${96 + droop * 0.6} L 30 98 Z" />
         ${person}
       </svg>
-      <div class="sky-badges">
-        <span class="sky-badge">${WEATHER_ICONS[snapshot.weatherKey]} ${snapshot.weatherLabel}</span>
-        <span class="sky-badge">${snapshot.temperatureC}°C</span>
-        <span class="sky-badge">${t("pillWind")} ${snapshot.windDirection} ${snapshot.windSpeedMs}m/s</span>
-      </div>
+      <svg class="sky-overlay" viewBox="0 0 240 140" aria-hidden="true" data-sky-windsock></svg>
+      <div class="sky-badges" data-sky-badges></div>
     </div>
     <article class="sky-caption">
       <p class="kicker">${snapshot.cloudLabel} · ${copy.nickname}</p>
       <p>${copy.tip}</p>
     </article>
   `;
+
+  return {
+    key: `${language}:${snapshot.cloudKey}:${snapshot.weatherKey}`,
+    scene,
+    windsock,
+    badges
+  };
 }
 
-export function renderLore(progress, language) {
+export function renderLore(progress, language, flippingIndex = null) {
   const t = (key) => getText(key, language);
+  const [open, close] = language === "ja" ? ["「", "」"] : ["\u201c", "\u201d"];
 
   return LORE.map((item, index) => {
     const choice = progress.lore[index];
@@ -761,8 +797,12 @@ export function renderLore(progress, language) {
     const outcome = item.verdict === "partly" ? t("loreHalf") : matches ? t("loreRight") : t("loreWrong");
 
     return `
-      <article class="lore-card ${answered ? `is-flipped verdict-${item.verdict}` : ""}">
-        <p class="lore-saying">「${copy.saying}」</p>
+      <article
+        class="lore-card ${answered ? `is-flipped verdict-${item.verdict}` : ""} ${index === flippingIndex ? "is-flipping" : ""}"
+        data-lore-card="${index}"
+        tabindex="-1"
+      >
+        <p class="lore-saying">${open}${copy.saying}${close}</p>
         ${answered
           ? `
             <p class="lore-outcome">${outcome}</p>
@@ -787,7 +827,7 @@ export function renderBadges(progress, language) {
 
     return `
       <li class="badge-card ${earned ? "is-earned" : ""}">
-        <span class="badge-icon" aria-hidden="true">${earned ? badge.icon : "？"}</span>
+        <span class="badge-icon" aria-hidden="true">${earned ? badge.icon : "?"}</span>
         <strong>${copy.title}</strong>
         <small>${copy.body}</small>
         <span class="visually-hidden">${earned ? getText("badgeEarned", language) : getText("badgeLocked", language)}</span>

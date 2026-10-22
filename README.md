@@ -65,7 +65,7 @@ npm run check:js
 | --- | --- | --- |
 | 見えないものを可視化し、操作に即座に反応する複数の表現（グラフ・数値・図）を連動させる | [PhET Interactive Simulations](https://www.colorado.edu/csl/programs/phet-interactive-simulations) | 天気図・グラフ・空の窓が同じ時刻で連動 |
 | 「予想してから確かめる (Can You Guess)」型の問いと、修了時のバッジ | [Weather Wows (EDULEARN25)](https://library.iated.org/view/KAYE2025WEA) | 予報士チャレンジ、バッジコレクション |
-| 予想と実際の差をスコア化する推測ゲーム | [ClimoGuesser](https://marlvel.ai/api/llm/apps/games/climoguesser) | 予報モードの得点・連続正解・称号 |
+| 予想と実際の差をスコア化する推測ゲーム | ClimoGuesser（気候を推測して得点を競う iOS アプリ） | 予報モードの得点・連続正解・称号 |
 | 観天望気は雲や空に関するものほど気象学で説明しやすく、動物に関するものは諸説ある | [ウェザーニュース](https://weathernews.jp/soramagazine/201604/09/)、[東洋経済オンライン](https://toyokeizai.net/articles/-/141844?display=b) | ことわざカードを「当たりやすい / 条件しだい / 根拠ははっきりしない」の 3 段階で判定 |
 | 前線という用語はベルゲン学派（ビヤクネスら）が第一次世界大戦期に導入。戦場の前線にたとえたという説明は通説 | [University of Bergen](https://www.uib.no/en/gfi/115011/deciphering-ancestry-cyclones-hencoop)、[Pima Open Pressbooks](https://pimaopen.pressbooks.pub/weatherandclimate/?p=733) | トリビアでは「〜とも言われます」と断定を避けて紹介 |
 | 寒冷前線通過時の気温・湿度の急低下、気圧上昇、風向の急変、突風（疾風） | [コトバンク「寒冷前線」](https://kotobank.jp/word/%E5%AF%92%E5%86%B7%E5%89%8D%E7%B7%9A-49779) | トリビア、予報モードの解説 |
